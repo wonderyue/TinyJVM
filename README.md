@@ -18,15 +18,23 @@ help:
 usage: [-h] [-v] [-cp [CLASSPATH [CLASSPATH ...]]] [-jh JAVAHOME] [-jar JAR] [mainClass]
 
 positional arguments:
+
   mainClass             java class to execute
 
+
+
 optional arguments:
+
   -h, --help            show this help message and exit
+
   -v, -version          print product version and exit
+
   -cp [CLASSPATH [CLASSPATH ...]], -classpath [CLASSPATH [CLASSPATH ...]]
                         <class search path of directories and zip/jar files>, default: [current directory]
+
   -jh JAVAHOME, -javahome JAVAHOME
                         java home path, default: $JAVA_HOME
+
   -jar JAR              jar to execute
 
 # Feature

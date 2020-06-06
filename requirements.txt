@@ -1,4 +1,1 @@
-autopep8==1.4.4
-certifi==2020.4.5.1
 numpy==1.18.4
-pycodestyle==2.5.0

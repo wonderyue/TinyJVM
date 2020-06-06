@@ -15,27 +15,35 @@ help:
 
 `python ./ -h`
 
-usage: [-h] [-v] [-cp [CLASSPATH [CLASSPATH ...]]] [-jh JAVAHOME] [-jar JAR] [mainClass]
+## help
+
+usage: [-h] [-v] [-cp [CLASSPATH [CLASSPATH ...]]] [-jh JAVAHOME] [-jar JAR] [main_class]
 
 positional arguments:
 
-​	mainClass             java class to execute
+- main_class             java class to execute
 
 
 
 optional arguments:
 
-​	-h, --help            show this help message and exit
+- -h, --help            show this help message and exit
 
-​	-v, -version          print product version and exit
+- -v, -version          print product version and exit
 
-​	-cp [CLASSPATH [CLASSPATH ...]], -classpath [CLASSPATH [CLASSPATH ...]]
-​                        <class search path of directories and zip/jar files>, default: [current directory]
+- -cp [CLASSPATH [CLASSPATH ...]], -classpath [CLASSPATH [CLASSPATH ...]]
+                          <class search path of directories and zip/jar files>, default: [current directory]
 
-​	-jh JAVAHOME, -javahome JAVAHOME
-​                        java home path, default: $JAVA_HOME
+- -jh JAVAHOME, -javahome JAVAHOME
+                          java home path, default: $JAVA_HOME
 
-​	-jar JAR              jar to execute
+- -jar JAR              jar to execute
+
+## turn on/off debug output
+
+modify debug.py: 
+
+`DEBUG = True`
 
 # Feature
 

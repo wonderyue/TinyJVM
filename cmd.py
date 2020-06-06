@@ -14,7 +14,7 @@ class Cmd:
                                  help='<class search path of directories and zip/jar files>, default: [current directory]')
         self.parser.add_argument('-jh', '-javahome', dest='javahome', action='store', default=os.environ.get('JAVA_HOME'),
                                  help='java home path, default: $JAVA_HOME')
-        self.parser.add_argument(dest='mainClass', action='store', nargs='?', default=None,
+        self.parser.add_argument(dest='main_class', action='store', nargs='?', default=None,
                                  help='java class to execute')
         self.parser.add_argument('-jar', dest='jar', action='store',
                                  help='jar to execute')
@@ -24,9 +24,9 @@ class Cmd:
         if args.version:
             print("version 0.1.0")
         else:
-            if args.mainClass is None and args.jar is None:
+            if args.main_class is None and args.jar is None:
                 print("Main Class or jar is required")
                 return
             jvm = TinyJVM(args.javahome, args.classpath,
-                          args.jar if args.mainClass is None else args.mainClass)
+                          args.jar if args.main_class is None else args.main_class)
             jvm.start()

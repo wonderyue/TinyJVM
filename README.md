@@ -3,9 +3,9 @@ A Java virtual machine implemented in python
 
 # How to run
 
-`
-pip install -r requirement.txt
-python ./ your_class_path/your_class.class`
+`pip install -r requirement.txt`
+
+`python ./ your_class_path/your_class.class`
 
 or
 

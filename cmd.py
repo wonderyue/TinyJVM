@@ -11,9 +11,9 @@ class Cmd:
         self.parser.add_argument('-v', '-version', dest='version', action='store_true',
                                  help='print product version and exit')
         self.parser.add_argument('-cp', '-classpath', dest='classpath', action='extend', nargs='*', default=[os.getcwd()],
-                                 help='<class search path of directories and zip/jar files>')
+                                 help='<class search path of directories and zip/jar files>, default: [current directory]')
         self.parser.add_argument('-jh', '-javahome', dest='javahome', action='store', default=os.environ.get('JAVA_HOME'),
-                                 help='java home path')
+                                 help='java home path, default: $JAVA_HOME')
         self.parser.add_argument(dest='mainClass', action='store', nargs='?', default=None,
                                  help='java class to execute')
         self.parser.add_argument('-jar', dest='jar', action='store',

@@ -3,6 +3,7 @@ import os
 import debug
 from class_file.class_reader import ClassReader
 from runtime_data.heap.clazz import Class
+from runtime_data.heap.utils import ATYPR_2_CLASS_NAME
 
 
 class ClassLoader:
@@ -72,10 +73,26 @@ class ClassLoader:
     def get_main_class(self):
         return self.load_class(self._main_class)
 
+    def load_array(self, atype):
+        if atype not in ATYPR_2_CLASS_NAME:
+            raise RuntimeError("Invalid atype")
+        return self.load_class(ATYPR_2_CLASS_NAME[atype])
+
     def load_class(self, fully_qualified_name):
         if fully_qualified_name in self._classes:
             return self._classes[fully_qualified_name]
+        if fully_qualified_name[0] == '[':
+            return self._load_array_class(fully_qualified_name)
         return self._load_non_array_class(fully_qualified_name)
+
+    def _load_array_class(self, fully_qualified_name):
+        clazz = Class.new_array(
+            self, fully_qualified_name, self.load_class("java/lang/Object"), self._get_interfaces())
+        self._classes[fully_qualified_name] = clazz
+        return clazz
+
+    def _get_interfaces(self):
+        return [self.load_class("java/lang/Cloneable"), self.load_class("java/io/Serializable")]
 
     def _load_non_array_class(self, fully_qualified_name):
         class_reader = self._parse_by_name(fully_qualified_name + ".class")
@@ -87,7 +104,7 @@ class ClassLoader:
         return clazz
 
     def _define_class(self, class_reader):
-        clazz = Class(class_reader, self)
+        clazz = Class.new_class(self, class_reader)
         self._resolve_super_class(clazz)
         self._resolve_interfaces(clazz)
         return clazz

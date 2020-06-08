@@ -84,3 +84,31 @@ class LSTORE_2(StoreLocalLongMixin, NoOperandInstruction):
 class LSTORE_3(StoreLocalLongMixin, NoOperandInstruction):
     def __init__(self):
         self.index = 3
+
+
+def _store_array_value(frame, value):
+    index = frame.pop_operand()
+    arr_obj = frame.pop_operand()
+    if arr_obj is None:
+        raise RuntimeError("java.lang.NullPointerException")
+    if index < 0 or index >= arr_obj.length:
+        raise RuntimeError("ArrayIndexOutOfBoundsException")
+    arr_obj[index] = value
+
+
+@unsafe_singleton
+class IASTORE(NoOperandInstruction):
+    def execute(self, frame):
+        _store_array_value(frame, frame.pop_operand())
+
+
+@unsafe_singleton
+class DASTORE(NoOperandInstruction):
+    def execute(self, frame):
+        _store_array_value(frame, frame.pop_operand_double())
+
+
+@unsafe_singleton
+class LASTORE(NoOperandInstruction):
+    def execute(self, frame):
+        _store_array_value(frame, frame.pop_operand_long())

@@ -103,7 +103,7 @@ class PUT_FIELD(ConstantPoolIndexOperandMixin, Instruction):
         clazz_obj = frame.pop_operand()
         if clazz_obj is None:
             raise RuntimeError("java.lang.NullPointerException")
-        clazz_obj.fields[field.index] = val
+        clazz_obj[field.index] = val
 
 
 class GET_FIELD(ConstantPoolIndexOperandMixin, Instruction):
@@ -119,7 +119,7 @@ class GET_FIELD(ConstantPoolIndexOperandMixin, Instruction):
         clazz_obj = frame.pop_operand()
         if clazz_obj is None:
             raise RuntimeError("java.lang.NullPointerException")
-        val = clazz_obj.fields[field.index]
+        val = clazz_obj[field.index]
         initial = field.descriptor[0]
         if initial == 'J':
             frame.push_operand_long(val)
@@ -170,6 +170,7 @@ def invoke_method(cur_frame, class_method):
 
 
 class INVOKE_STATIC(ConstantPoolIndexOperandMixin, Instruction):
+
     def execute(self, frame):
         runtime_cp = frame.method.clazz.constant_pool
         method_ref = runtime_cp.get_constant_value(self.index)
@@ -186,6 +187,7 @@ class INVOKE_STATIC(ConstantPoolIndexOperandMixin, Instruction):
 
 
 class INVOKE_INTERFACE(ConstantPoolIndexOperandMixin, Instruction):
+
     def fetch_operand(self, reader):
         self.index = reader.read_uint(2)
         reader.read_uint(1)  # count
@@ -193,7 +195,7 @@ class INVOKE_INTERFACE(ConstantPoolIndexOperandMixin, Instruction):
 
     def execute(self, frame):
         cur_class = frame.method.clazz
-        runtime_cp = frame.method.clazz.constant_pool
+        runtime_cp = cur_class.constant_pool
         method_ref = runtime_cp.get_constant_value(self.index)
         resolved_clazz = method_ref.resolved_class()
         resolved_method = method_ref.resolved_member()
@@ -229,7 +231,7 @@ class INVOKE_SPECIAL(ConstantPoolIndexOperandMixin, Instruction):
 
     def execute(self, frame):
         cur_class = frame.method.clazz
-        runtime_cp = frame.method.clazz.constant_pool
+        runtime_cp = cur_class.constant_pool
         method_ref = runtime_cp.get_constant_value(self.index)
         resolved_clazz = method_ref.resolved_class()
         resolved_method = method_ref.resolved_member()
@@ -250,7 +252,7 @@ class INVOKE_SPECIAL(ConstantPoolIndexOperandMixin, Instruction):
         if resolved_method.is_protected() and \
                 resolved_method.clazz.is_super_class_of(cur_class) and \
                 resolved_method.clazz.get_package_name() != cur_class.get_package_name() and \
-                this_ref.Class() != cur_class and \
+                this_ref.clazz != cur_class and \
                 not this_ref.clazz.is_sub_class_of(cur_class):
             raise RuntimeError("java.lang.IllegalAccessError {0}.{1}".format(
                 resolved_clazz.class_name, resolved_method.name))
@@ -285,7 +287,7 @@ class INVOKE_VIRTUAL(ConstantPoolIndexOperandMixin, Instruction):
         resolved_method: println 
         """
         cur_class = frame.method.clazz
-        runtime_cp = frame.method.clazz.constant_pool
+        runtime_cp = cur_class.constant_pool
         method_ref = runtime_cp.get_constant_value(self.index)
         resolved_clazz = method_ref.resolved_class()
         resolved_method = method_ref.resolved_member()
@@ -330,3 +332,43 @@ class INVOKE_VIRTUAL(ConstantPoolIndexOperandMixin, Instruction):
         else:
             raise RuntimeError("println: " + descriptor)
         frame.pop_operand()
+
+
+class NEW_ARRAY(Instruction):
+
+    def fetch_operand(self, reader):
+        self.atype = reader.read_uint(1)
+
+    def execute(self, frame):
+        count = frame.pop_operand()
+        if count < 0:
+            raise RuntimeError("java.lang.NegativeArraySizeException")
+        class_loader = frame.method.clazz.loader
+        arr_class = class_loader.load_array(self.atype)
+        arr_obj = arr_class.new_array_object(count)
+        frame.push_operand(arr_obj)
+
+
+class ANEW_ARRAY(ConstantPoolIndexOperandMixin, Instruction):
+
+    def execute(self, frame):
+        cur_class = frame.method.clazz
+        runtime_cp = cur_class.constant_pool
+        class_ref = runtime_cp.get_constant_value(self.index)
+        resolved_clazz = class_ref.resolved_class()
+        count = frame.pop_operand()
+        if count < 0:
+            raise RuntimeError("java.lang.NegativeArraySizeException")
+        arr_class = resolved_clazz.get_array_class()
+        arr_obj = arr_class.new_array_object(count)
+        frame.push_operand(arr_obj)
+
+
+@unsafe_singleton
+class ARRAY_LENGTH(NoOperandInstruction):
+
+    def execute(self, frame):
+        arr_obj = frame.pop_operand()
+        if arr_obj is None:
+            raise RuntimeError("java.lang.NullPointerException")
+        frame.push_operand(arr_obj.length)

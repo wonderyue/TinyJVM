@@ -47,10 +47,12 @@ modify debug.py:
 
 # Feature
 
-- [x] class loader
-
+- [x] class loader(.class/.jar)
 - [x] instructions: 160+/202
 - [x] interpreter
+- [x] array
+- [ ] verify
 - [ ] native method
 - [ ] exceptions
 - [ ] multithreading
+- [ ] gc

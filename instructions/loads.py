@@ -84,3 +84,31 @@ class LLOAD_2(LoadLocalLongMixin, NoOperandInstruction):
 class LLOAD_3(LoadLocalLongMixin, NoOperandInstruction):
     def __init__(self):
         self.index = 3
+
+
+def _load_array_value(frame):
+    index = frame.pop_operand()
+    arr_obj = frame.pop_operand()
+    if arr_obj is None:
+        raise RuntimeError("java.lang.NullPointerException")
+    if index < 0 or index >= arr_obj.length:
+        raise RuntimeError("ArrayIndexOutOfBoundsException")
+    return arr_obj[index]
+
+
+@unsafe_singleton
+class IALOAD(NoOperandInstruction):
+    def execute(self, frame):
+        frame.push_operand(_load_array_value(frame))
+
+
+@unsafe_singleton
+class DALOAD(NoOperandInstruction):
+    def execute(self, frame):
+        frame.push_operand_double(_load_array_value(frame))
+
+
+@unsafe_singleton
+class LALOAD(NoOperandInstruction):
+    def execute(self, frame):
+        frame.push_operand_long(_load_array_value(frame))

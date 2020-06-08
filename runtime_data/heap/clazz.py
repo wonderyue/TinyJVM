@@ -4,26 +4,49 @@ from runtime_data.heap.class_field import ClassField
 from runtime_data.heap.class_method import ClassMethod
 from runtime_data.heap.object import Object
 from runtime_data.frame import Frame
+from runtime_data.heap.utils import get_array_class_name, get_component_class_name
 import os
 
 
 class Class:
 
-    def __init__(self, class_reader, class_loader):
-        self.access_flags = class_reader.access_flags
-        self.class_name = class_reader.get_class_name()
-        self.super_class_name = class_reader.get_super_class_name()
-        self.super_class = None
+    def __init__(self, class_loader):
         self.loader = class_loader
-        self.interface_names = class_reader.interfaces.get_interface_names()
+        self.access_flags = None
+        self.class_name = None
+        self.super_class_name = None
+        self.super_class = None
+        self.interface_names = []
         self.interfaces = []
-        self.constant_pool = RuntimeConstanPool(
-            self, class_reader.constant_pool)
-        self.fields = ClassField.new_fields(self, class_reader.fields)
+        self.constant_pool = None
+        self.fields = []
         self.instance_field_count = 0
-        self.methods = ClassMethod.new_methods(self, class_reader.methods)
+        self.methods = []
         self.static_fields = []
         self._is_clinit_started = False
+
+    @staticmethod
+    def new_class(class_loader, class_reader):
+        clazz = Class(class_loader)
+        clazz.access_flags = class_reader.access_flags
+        clazz.class_name = class_reader.get_class_name()
+        clazz.super_class_name = class_reader.get_super_class_name()
+        clazz.interface_names = class_reader.interfaces.get_interface_names()
+        clazz.constant_pool = RuntimeConstanPool(
+            clazz, class_reader.constant_pool)
+        clazz.fields = ClassField.new_fields(clazz, class_reader.fields)
+        clazz.methods = ClassMethod.new_methods(clazz, class_reader.methods)
+        return clazz
+
+    @staticmethod
+    def new_array(class_loader, fully_qualified_name, super_class, interfaces):
+        clazz = Class(class_loader)
+        clazz.access_flags = AF.ACC_PUBLIC
+        clazz.class_name = fully_qualified_name
+        clazz.super_class = super_class
+        clazz.interfaces = interfaces
+        clazz.start_clinit()
+        return clazz
 
     @property
     def is_clinit_started(self) -> bool:
@@ -31,6 +54,9 @@ class Class:
 
     def start_clinit(self):
         self._is_clinit_started = True
+
+    def is_array(self) -> bool:
+        return self.class_name[0] == '['
 
     def is_public(self) -> bool:
         return 0 != self.access_flags & AF.ACC_PUBLIC
@@ -85,16 +111,45 @@ class Class:
     def is_assignable_from(self, other_class) -> bool:
         if other_class == self:
             return True
-        if not self.is_interface():
-            return other_class.is_sub_class_of(self)
+        if not other_class.is_array():
+            if not other_class.is_interface():
+                if not self.is_interface():
+                    return other_class.is_sub_class_of(self)
+                else:
+                    return other_class.is_implements(self)
+            else:
+                if not self.is_interface():
+                    return self.is_jl_object()
+                else:
+                    return self.is_super_interface_of(other_class)
         else:
-            return other_class.is_implements(self)
+            if not self.is_array():
+                if not self.is_interface():
+                    return self.is_jl_object()
+                else:
+                    return self.is_jl_cloneable() or self.is_jio_serializable()
+            else:
+                sc = other_class.get_component_class()
+                tc = self.get_component_class()
+                return sc == tc or tc.is_assignable_from(sc)
 
     def is_sub_interface_of(self, other_interface) -> bool:
         for super_interface in self.interfaces:
             if super_interface == other_interface or super_interface.is_sub_interface_of(other_interface):
                 return True
         return False
+
+    def is_super_interface_of(self, other_interface) -> bool:
+        return other_interface.is_sub_interface_of(self)
+
+    def is_jl_object(self):
+        return self.class_name == "java/lang/Object"
+
+    def is_jl_cloneable(self):
+        return self.class_name == "java/lang/Cloneable"
+
+    def is_jio_serializable(self):
+        return self.class_name == "java/io/Serializable"
 
     def get_main_method(self):
         return self.get_static_method("main", "([Ljava/lang/String;)V")
@@ -109,7 +164,16 @@ class Class:
         return None
 
     def new_object(self):
-        return Object(self)
+        return Object.new_object(self)
+
+    def new_array_object(self, count):
+        return Object.new_array(self, count)
+
+    def get_array_class(self):
+        return self.loader.load_class(get_array_class_name(self.class_name))
+
+    def get_component_class(self):
+        return self.loader.load_class(get_component_class_name(self.class_name))
 
     def clinit(self, thread):
         self.start_clinit()

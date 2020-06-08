@@ -56,6 +56,14 @@ opcode2instruction = {
     0x2b: ILOAD_1(),  # ALOAD_1
     0x2c: ILOAD_2(),  # ALOAD_2
     0x2d: ILOAD_3(),  # ALOAD_3
+    0x2e: IALOAD(),
+    0x2f: LALOAD(),
+    0x30: IALOAD(),  # FALOAD
+    0x31: DALOAD(),
+    0x32: IALOAD(),  # AALOAD
+    0x33: IALOAD(),  # BALOAD
+    0x34: IALOAD(),  # CALOAD
+    0x35: IALOAD(),  # SALOAD
     0x36: ISTORE(),
     0x37: LSTORE(),
     0x38: ISTORE(),  # FSTORE
@@ -81,6 +89,14 @@ opcode2instruction = {
     0x4c: ISTORE_1(),  # ASTORE_1
     0x4d: ISTORE_2(),  # ASTORE_2
     0x4e: ISTORE_3(),  # ASTORE_3
+    0x4f: IASTORE(),
+    0x50: LASTORE(),
+    0x51: IASTORE(),    # FASTORE
+    0x52: DASTORE(),
+    0x53: IASTORE(),    # AASTORE
+    0x54: IASTORE(),    # BASTORE
+    0x55: IASTORE(),    # CASTORE
+    0x56: IASTORE(),  # SASTORE
     0x57: POP(),
     0x58: POP2(),
     0x59: DUP(),
@@ -180,10 +196,14 @@ opcode2instruction = {
     0xb9: INVOKE_INTERFACE(),
 
     0xbb: NEW(),
+    0xbc: NEW_ARRAY(),
+    0xbd: ANEW_ARRAY(),
+    0xbe: ARRAY_LENGTH(),
     0xc0: CHECK_CAST(),
     0xc1: INSTANCE_OF(),
 
     0xc4: WIDE(),
+    0xc5: MULTI_ANEW_ARRAY(),
     0xc6: IFNULL(),
     0xc7: IFNONNULL(),
     0xc8: GOTO_W(),

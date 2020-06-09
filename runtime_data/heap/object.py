@@ -1,3 +1,9 @@
+from runtime_data.heap.utils import (
+    is_primitive,
+    get_default_value,
+)
+
+
 class Object:
     def __init__(self, clazz, data):
         """
@@ -24,13 +30,16 @@ class Object:
         return len(self._data)
 
     @staticmethod
-    def new_object(clazz):
-        return Object(clazz, [None] * clazz.instance_field_count)
+    def new_object(clazz, data):
+        return Object(clazz, data)
 
     @staticmethod
     def new_array(clazz, count):
-        # TODO: default value
-        return Object(clazz, [None] * count)
+        component_class_name = clazz.class_name[1:]
+        default = None
+        if is_primitive(component_class_name):
+            default = get_default_value(component_class_name)
+        return Object(clazz, [default] * count)
 
     def is_array(self) -> bool:
         return self.clazz.is_array()

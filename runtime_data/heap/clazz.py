@@ -7,7 +7,6 @@ from runtime_data.frame import Frame
 from runtime_data.heap.utils import (
     get_array_class_name,
     get_component_class_name,
-    is_primitive,
 )
 import os
 
@@ -161,9 +160,6 @@ class Class:
     def is_jio_serializable(self):
         return self.class_name == "java/io/Serializable"
 
-    def is_primitive(self) -> bool:
-        return is_primitive()
-
     @property
     def java_name(self):
         return self.class_name.replace("/", ".")
@@ -204,7 +200,11 @@ class Class:
         return self.get_method("<clinit>", "()V", True)
 
     def new_object(self):
-        return Object.new_object(self)
+        data = [None] * self.instance_field_count
+        for field in self.fields:
+            if not field.is_static():
+                data[field.index] = field.val
+        return Object.new_object(self, data)
 
     def new_array_object(self, count):
         return Object.new_array(self, count)

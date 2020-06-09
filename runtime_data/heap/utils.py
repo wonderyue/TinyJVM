@@ -33,6 +33,16 @@ PRIMITIVE_TYPE = {
     "double": "D",
 }
 
+PRIMITIVE_DEFAULT_VALUE = {
+    "Z": False,
+    "B": 0x00,
+    "S": 0,
+    "I": 0,
+    "J": 0,
+    "C": 0,
+    "F": 0.0,
+    "D": 0.0,
+}
 
 ATYPR_2_CLASS_NAME = {
     # AT_BOOLEAN
@@ -56,6 +66,10 @@ ATYPR_2_CLASS_NAME = {
 
 def is_primitive(class_name) -> bool:
     return class_name in PRIMITIVE_TYPE.values()
+
+
+def get_default_value(descriptor):
+    return PRIMITIVE_DEFAULT_VALUE.get(descriptor, None)
 
 
 def get_array_class_name(class_name):

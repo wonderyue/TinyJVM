@@ -1,5 +1,11 @@
-from instructions.base import Instruction, NoOperandInstruction, LocalIndexOperandMixin, ConstantPoolIndexOperandMixin
+from instructions.base import (
+    Instruction,
+    NoOperandInstruction,
+    LocalIndexOperandMixin,
+    ConstantPoolIndexOperandMixin,
+)
 from utils.singleton import unsafe_singleton
+from runtime_data.heap import string
 
 
 @unsafe_singleton
@@ -115,12 +121,14 @@ class SIPUSH(Instruction):
 
 
 class _LDC:
-
     def execute(self, frame):
-        runtime_cp = frame.method.clazz.constant_pool
+        cur_class = frame.method.clazz
+        runtime_cp = cur_class.constant_pool
         val = runtime_cp.get_constant_value(self.index)
-        frame.push_operand(val)
-        # TODO: String
+        if isinstance(val, str):
+            frame.push_operand(string.new_string(cur_class.loader, val))
+        else:
+            frame.push_operand(val)
 
 
 class LDC(_LDC, LocalIndexOperandMixin, Instruction):

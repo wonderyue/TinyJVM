@@ -4,12 +4,15 @@ from runtime_data.heap.class_field import ClassField
 from runtime_data.heap.class_method import ClassMethod
 from runtime_data.heap.object import Object
 from runtime_data.frame import Frame
-from runtime_data.heap.utils import get_array_class_name, get_component_class_name
+from runtime_data.heap.utils import (
+    get_array_class_name,
+    get_component_class_name,
+    is_primitive,
+)
 import os
 
 
 class Class:
-
     def __init__(self, class_loader):
         self.loader = class_loader
         self.access_flags = None
@@ -32,8 +35,7 @@ class Class:
         clazz.class_name = class_reader.get_class_name()
         clazz.super_class_name = class_reader.get_super_class_name()
         clazz.interface_names = class_reader.interfaces.get_interface_names()
-        clazz.constant_pool = RuntimeConstanPool(
-            clazz, class_reader.constant_pool)
+        clazz.constant_pool = RuntimeConstanPool(clazz, class_reader.constant_pool)
         clazz.fields = ClassField.new_fields(clazz, class_reader.fields)
         clazz.methods = ClassMethod.new_methods(clazz, class_reader.methods)
         return clazz
@@ -56,7 +58,7 @@ class Class:
         self._is_clinit_started = True
 
     def is_array(self) -> bool:
-        return self.class_name[0] == '['
+        return self.class_name[0] == "["
 
     def is_public(self) -> bool:
         return 0 != self.access_flags & AF.ACC_PUBLIC
@@ -83,7 +85,10 @@ class Class:
         return 0 != self.access_flags & AF.ACC_ENUM
 
     def is_accessible_from(self, other_cllass) -> bool:
-        return self.is_public() or self.get_package_name() == other_cllass.get_package_name()
+        return (
+            self.is_public()
+            or self.get_package_name() == other_cllass.get_package_name()
+        )
 
     def get_package_name(self):
         return os.path.dirname(self.class_name)
@@ -103,7 +108,9 @@ class Class:
         clazz = self
         while clazz:
             for interface in clazz.interfaces:
-                if interface == other_interface or interface.is_sub_interface_of(other_interface):
+                if interface == other_interface or interface.is_sub_interface_of(
+                    other_interface
+                ):
                     return True
             clazz = clazz.super_class
         return False
@@ -135,7 +142,10 @@ class Class:
 
     def is_sub_interface_of(self, other_interface) -> bool:
         for super_interface in self.interfaces:
-            if super_interface == other_interface or super_interface.is_sub_interface_of(other_interface):
+            if (
+                super_interface == other_interface
+                or super_interface.is_sub_interface_of(other_interface)
+            ):
                 return True
         return False
 
@@ -151,17 +161,47 @@ class Class:
     def is_jio_serializable(self):
         return self.class_name == "java/io/Serializable"
 
+    def is_primitive(self) -> bool:
+        return is_primitive()
+
+    @property
+    def java_name(self):
+        return self.class_name.replace("/", ".")
+
+    def get_method(self, name, descriptor, is_static):
+        c = self
+        while c is not None:
+            for method in c.methods:
+                if (
+                    method.is_static() == is_static
+                    and method.name == name
+                    and method.descriptor == descriptor
+                ):
+                    return method
+            c = c.super_class
+        return None
+
+    def get_field(self, name, descriptor, is_static):
+        c = self
+        while c is not None:
+            for field in c.fields:
+                if (
+                    field.is_static() == is_static
+                    and field.name == name
+                    and field.descriptor == descriptor
+                ):
+                    return field
+            c = c.super_class
+        return None
+
+    def get_instance_method(self, name, descriptor):
+        return self.get_method(name, descriptor, False)
+
     def get_main_method(self):
-        return self.get_static_method("main", "([Ljava/lang/String;)V")
+        return self.get_method("main", "([Ljava/lang/String;)V", True)
 
     def get_clinit_method(self):
-        return self.get_static_method("<clinit>", "()V")
-
-    def get_static_method(self, name, descriptor):
-        for method in self.methods:
-            if method.is_static() and method.name == name and method.descriptor == descriptor:
-                return method
-        return None
+        return self.get_method("<clinit>", "()V", True)
 
     def new_object(self):
         return Object.new_object(self)
@@ -170,9 +210,11 @@ class Class:
         return Object.new_array(self, count)
 
     def get_array_class(self):
+        "classname -> [class_name"
         return self.loader.load_class(get_array_class_name(self.class_name))
 
     def get_component_class(self):
+        "[class_name -> class_name"
         return self.loader.load_class(get_component_class_name(self.class_name))
 
     def clinit(self, thread):

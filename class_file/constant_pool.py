@@ -17,19 +17,43 @@ class ConstantPool:
         # CONSTANT_String
         8: lambda reader: {"tag": 8, "utf8_index": reader.read_int(2)},
         # CONSTANT_Fieldref
-        9: lambda reader: {"tag": 9, "class_index": reader.read_int(2), "name_and_type_index": reader.read_int(2)},
+        9: lambda reader: {
+            "tag": 9,
+            "class_index": reader.read_int(2),
+            "name_and_type_index": reader.read_int(2),
+        },
         # CONSTANT_Methodref
-        10: lambda reader: {"tag": 10, "class_index": reader.read_int(2), "name_and_type_index": reader.read_int(2)},
+        10: lambda reader: {
+            "tag": 10,
+            "class_index": reader.read_int(2),
+            "name_and_type_index": reader.read_int(2),
+        },
         # CONSTANT_InterfaceMethodref
-        11: lambda reader: {"tag": 11, "class_index": reader.read_int(2), "name_and_type_index": reader.read_int(2)},
+        11: lambda reader: {
+            "tag": 11,
+            "class_index": reader.read_int(2),
+            "name_and_type_index": reader.read_int(2),
+        },
         # CONSTANT_NameAndType
-        12: lambda reader: {"tag": 12, "name_index": reader.read_int(2), "descriptor_index": reader.read_int(2)},
+        12: lambda reader: {
+            "tag": 12,
+            "name_index": reader.read_int(2),
+            "descriptor_index": reader.read_int(2),
+        },
         # CONSTANT_MethodHandle
-        15: lambda reader: {"tag": 15, "reference_kind": reader.read_int(1), "reference_index": reader.read_int(2)},
+        15: lambda reader: {
+            "tag": 15,
+            "reference_kind": reader.read_int(1),
+            "reference_index": reader.read_int(2),
+        },
         # CONSTANT_MethodType
         16: lambda reader: {"tag": 16, "descriptor_index": reader.read_int(2)},
         # CONSTANT_InvokeDynamic
-        18: lambda reader: {"tag": 18, "bootstrap_method_attr_index": reader.read_int(2), "name_and_type_index": reader.read_int(2)},
+        18: lambda reader: {
+            "tag": 18,
+            "bootstrap_method_attr_index": reader.read_int(2),
+            "name_and_type_index": reader.read_int(2),
+        },
         # CONSTANT_Package
         20: lambda reader: {"tag": 20, "name_index": reader.read_int(2)},
     }
@@ -71,11 +95,16 @@ class ConstantPool:
 
     def get_name_and_descriptor(self, ref_index):
         info = self.get_constant(ref_index)
-        return self.get_constant_value(info["name_index"]), self.get_constant_value(info["descriptor_index"])
+        return (
+            self.get_constant_value(info["name_index"]),
+            self.get_constant_value(info["descriptor_index"]),
+        )
 
     def get_classname_name_and_descriptor(self, member_ref_index):
         ref_info = self.get_constant(member_ref_index)
         class_name = self.get_class_name(ref_info["class_index"])
-        name, descriptor = self.get_name_and_descriptor(
-            ref_info["name_and_type_index"])
+        name, descriptor = self.get_name_and_descriptor(ref_info["name_and_type_index"])
         return {"class_name": class_name, "name": name, "descriptor": descriptor}
+
+    def get_string_value(self, index):
+        return self.get_constant_value(self.get_constant(index)["utf8_index"])

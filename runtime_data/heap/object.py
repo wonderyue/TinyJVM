@@ -16,6 +16,10 @@ class Object:
         self._data[key] = value
 
     @property
+    def data(self):
+        return self._data
+
+    @property
     def length(self):
         return len(self._data)
 
@@ -33,3 +37,11 @@ class Object:
 
     def is_instance_of(self, clazz) -> bool:
         return clazz.is_assignable_from(self.clazz)
+
+    def set_field_value(self, name, descriptor, value):
+        field = self.clazz.get_field(name, descriptor, False)
+        self._data[field.index] = value
+
+    def get_field_value(self, name, descriptor):
+        field = self.clazz.get_field(name, descriptor, False)
+        return self._data[field.index]

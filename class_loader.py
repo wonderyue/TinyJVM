@@ -1,32 +1,34 @@
 import zipfile
 import os
-import debug
 from class_file.class_reader import ClassReader
 from runtime_data.heap.clazz import Class
 from runtime_data.heap.utils import ATYPR_2_CLASS_NAME
+from runtime_data.heap import string
 
 
 class ClassLoader:
-
     def __init__(self, javahome, user_paths, main_class):
-        self._boot_classpath = os.path.join(javahome, 'jre', 'lib')
-        self._ext_classpath = os.path.join(javahome, 'jre', 'lib', 'ext')
+        self._boot_classpath = os.path.join(javahome, "jre", "lib")
+        self._ext_classpath = os.path.join(javahome, "jre", "lib", "ext")
         self._user_classpaths = user_paths
-        self._main_class = os.path.basename(os.path.splitext(main_class)[0]) if main_class.endswith(
-            '.class') else self._main_class_from_jar(main_class)
+        self._main_class = (
+            os.path.basename(os.path.splitext(main_class)[0])
+            if main_class.endswith(".class")
+            else self._main_class_from_jar(main_class)
+        )
         self._classes = {}
-        print('BootClasspath:', self._boot_classpath)
-        print('ExtClasspath', self._ext_classpath)
-        print('UserClasspaths', self._user_classpaths)
-        print('MainClass', self._main_class)
+        print("BootClasspath:", self._boot_classpath)
+        print("ExtClasspath", self._ext_classpath)
+        print("UserClasspaths", self._user_classpaths)
+        print("MainClass", self._main_class)
 
     def _main_class_from_jar(self, jar):
         jar = zipfile.ZipFile(jar)
-        with jar.open('META-INF/MANIFEST.MF', mode='r') as manifest:
+        with jar.open("META-INF/MANIFEST.MF", mode="r") as manifest:
             for line in manifest.readlines():
-                s = line.decode('utf-8')
-                if s.startswith('Main-Class'):
-                    return s.split(':')[1].strip().replace("\n\r", "")
+                s = line.decode("utf-8")
+                if s.startswith("Main-Class"):
+                    return s.split(":")[1].strip().replace("\n\r", "")
         return None
 
     def _walk_dir(self, dir, filename, callback=None):
@@ -34,11 +36,10 @@ class ClassLoader:
             for name in files:
                 if name == filename:
                     if callback is not None:
-                        with open(os.path.join(root, name), 'rb') as fd:
+                        with open(os.path.join(root, name), "rb") as fd:
                             return callback(fd)
-                elif name.endswith('.jar'):
-                    res = self._walk_jar(os.path.join(
-                        root, name), filename, callback)
+                elif name.endswith(".jar"):
+                    res = self._walk_jar(os.path.join(root, name), filename, callback)
                     if res is not None:
                         return res
         return None
@@ -48,7 +49,7 @@ class ClassLoader:
         for name in jar.namelist():
             if name == filename:
                 if callback is not None:
-                    with jar.open(name, mode='r') as fd:
+                    with jar.open(name, mode="r") as fd:
                         return callback(fd)
         return None
 
@@ -81,18 +82,25 @@ class ClassLoader:
     def load_class(self, fully_qualified_name):
         if fully_qualified_name in self._classes:
             return self._classes[fully_qualified_name]
-        if fully_qualified_name[0] == '[':
+        if fully_qualified_name[0] == "[":
             return self._load_array_class(fully_qualified_name)
         return self._load_non_array_class(fully_qualified_name)
 
     def _load_array_class(self, fully_qualified_name):
         clazz = Class.new_array(
-            self, fully_qualified_name, self.load_class("java/lang/Object"), self._get_interfaces())
+            self,
+            fully_qualified_name,
+            self.load_class("java/lang/Object"),
+            self._get_interfaces(),
+        )
         self._classes[fully_qualified_name] = clazz
         return clazz
 
     def _get_interfaces(self):
-        return [self.load_class("java/lang/Cloneable"), self.load_class("java/io/Serializable")]
+        return [
+            self.load_class("java/lang/Cloneable"),
+            self.load_class("java/io/Serializable"),
+        ]
 
     def _load_non_array_class(self, fully_qualified_name):
         class_reader = self._parse_by_name(fully_qualified_name + ".class")
@@ -145,5 +153,10 @@ class ClassLoader:
             if field.is_static():
                 field.index = index
                 index += 1
-                clazz.static_fields.append(
-                    field.val if field.is_final() else None)
+                if field.is_final():
+                    if isinstance(field.val, str):
+                        clazz.static_fields.append(string.new_string(self, field.val))
+                    else:
+                        clazz.static_fields.append(field.val)
+                else:
+                    clazz.static_fields.append(None)

@@ -9,11 +9,11 @@ class Interpreter:
     def __init__(self, class_method):
         thread = Thread()
         thread.push_frame(Frame(thread, class_method))
-        try:
-            self.run(thread, class_method.code)
-        except Exception as e:
-            print(e)
-            log_frames(thread)
+        # try:
+        self.run(thread, class_method.code)
+        # except Exception as e:
+        #     print(e)
+        #     log_frames(thread)
 
     def run(self, thread, code):
         reader = BytecodeReader()

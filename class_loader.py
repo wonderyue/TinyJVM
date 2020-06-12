@@ -162,7 +162,7 @@ class ClassLoader:
             if field.is_static():
                 field.index = index
                 index += 1
-                if field.is_final():
+                if field.is_final() or field.is_primitive():
                     if isinstance(field.val, str):
                         clazz.static_fields.append(string.new_string(self, field.val))
                     else:

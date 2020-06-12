@@ -10,6 +10,11 @@ from native.java.lang.float import float_to_raw_int_bits, int_bits_to_float
 from native.java.lang.double import double_to_raw_long_bits, long_bits_to_double
 from native.java.lang.string import intern
 from native.sun.misc.vm import initialize
+from native.java.lang.thread import current_thread, is_alive
+from native.java.security.access_controller import (
+    do_privileged,
+    get_stack_access_control_context,
+)
 
 
 def _empty_native_method(frame):
@@ -29,7 +34,6 @@ _native_method = {
     "java/lang/Class@desiredAssertionStatus0@(Ljava/lang/Class;)Z": desired_assertion_status_0,
     "sun/reflect/Reflection@getCallerClass@()Ljava/lang/Class;": get_caller_class,
     "java/lang/Class@forName0@(Ljava/lang/String;ZLjava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/Class;": get_primitive_class,
-    "java/security/AccessController@doPrivileged@(Ljava/security/PrivilegedAction;)Ljava/lang/Object;": _empty_native_method_with_return,
     "java/lang/System@arraycopy@(Ljava/lang/Object;ILjava/lang/Object;II)V": array_copy,
     "java/lang/Float@floatToRawIntBits@(F)I": float_to_raw_int_bits,
     "java/lang/Float@intBitsToFloat@(I)F": int_bits_to_float,
@@ -37,6 +41,13 @@ _native_method = {
     "java/lang/Double@longBitsToDouble@(J)D": long_bits_to_double,
     "java/lang/String@intern@()Ljava/lang/String;": intern,
     "sun/misc/VM@initialize@()V": initialize,
+    "java/lang/Thread@currentThread@()Ljava/lang/Thread;": current_thread,
+    "java/lang/Thread@isAlive@()Z": is_alive,
+    "java/lang/Thread@setPriority0@(I)V": _empty_native_method,
+    "java/lang/Thread@start0@()V": _empty_native_method,
+    "java/security/AccessController@doPrivileged@(Ljava/security/PrivilegedAction;)Ljava/lang/Object;": do_privileged,
+    "java/security/AccessController@doPrivileged@(Ljava/security/PrivilegedExceptionAction;)Ljava/lang/Object;": do_privileged,
+    "java/security/AccessController@getStackAccessControlContext@()Ljava/security/AccessControlContext;": get_stack_access_control_context,
 }
 
 

@@ -67,8 +67,8 @@ ATYPR_2_CLASS_NAME = {
 }
 
 
-def is_primitive(class_name) -> bool:
-    return class_name in PRIMITIVE_TYPE.values()
+def is_primitive(descriptor) -> bool:
+    return descriptor in PRIMITIVE_TYPE.values()
 
 
 def get_default_value(descriptor):

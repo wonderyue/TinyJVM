@@ -1,5 +1,3 @@
-import zipfile
-import os
 from class_loader import ClassLoader
 from interpreter.interpreter import Interpreter
 
@@ -12,5 +10,4 @@ class TinyJVM:
 
     def start(self):
         print("====start====")
-        Interpreter(self.classloader.get_main_class(
-        ).get_main_method())
+        Interpreter(self.classloader.get_main_class().get_main_method())

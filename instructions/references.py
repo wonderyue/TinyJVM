@@ -450,3 +450,15 @@ class INVOKE_NATIVE(NoOperandInstruction):
                 )
             )
         native_method(frame)
+
+
+@unsafe_singleton
+class MONITOR_ENTER(NoOperandInstruction):
+    def execute(self, frame):
+        frame.pop_operand()
+
+
+@unsafe_singleton
+class MONITOR_EXIT(NoOperandInstruction):
+    def execute(self, frame):
+        frame.pop_operand()

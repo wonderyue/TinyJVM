@@ -96,13 +96,13 @@ class ICONST_5(NoOperandInstruction):
 @unsafe_singleton
 class LCONST_0(NoOperandInstruction):
     def execute(self, frame):
-        frame.push_operand(0)
+        frame.push_operand_long(0)
 
 
 @unsafe_singleton
 class LCONST_1(NoOperandInstruction):
     def execute(self, frame):
-        frame.push_operand(1)
+        frame.push_operand_long(1)
 
 
 class BIPUSH(Instruction):

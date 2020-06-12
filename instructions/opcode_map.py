@@ -200,6 +200,8 @@ opcode2instruction = {
     0xBE: ARRAY_LENGTH(),
     0xC0: CHECK_CAST(),
     0xC1: INSTANCE_OF(),
+    0xC2: MONITOR_ENTER(),
+    0xC3: MONITOR_EXIT(),
     0xC4: WIDE(),
     0xC5: MULTI_ANEW_ARRAY(),
     0xC6: IFNULL(),

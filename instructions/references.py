@@ -4,9 +4,10 @@ from instructions.base import (
     NoOperandInstruction,
 )
 from utils.singleton import unsafe_singleton
-from runtime_data.frame import Frame
 from runtime_data.heap.utils import lookup_method_in_class
 from runtime_data.heap import string
+from native import register
+from runtime_data.heap.utils import invoke_method
 
 
 class NEW(ConstantPoolIndexOperandMixin, Instruction):
@@ -117,10 +118,10 @@ class PUT_FIELD(ConstantPoolIndexOperandMixin, Instruction):
             val = frame.pop_operand_double()
         else:
             val = frame.pop_operand()
-        clazz_obj = frame.pop_operand()
-        if clazz_obj is None:
+        obj = frame.pop_operand()
+        if obj is None:
             raise RuntimeError("java.lang.NullPointerException")
-        clazz_obj[field.index] = val
+        obj[field.index] = val
 
 
 class GET_FIELD(ConstantPoolIndexOperandMixin, Instruction):
@@ -135,10 +136,10 @@ class GET_FIELD(ConstantPoolIndexOperandMixin, Instruction):
                     clazz.class_name, field.name
                 )
             )
-        clazz_obj = frame.pop_operand()
-        if clazz_obj is None:
+        obj = frame.pop_operand()
+        if obj is None:
             raise RuntimeError("java.lang.NullPointerException")
-        val = clazz_obj[field.index]
+        val = obj[field.index]
         initial = field.descriptor[0]
         if initial == "J":
             frame.push_operand_long(val)
@@ -150,14 +151,14 @@ class GET_FIELD(ConstantPoolIndexOperandMixin, Instruction):
 
 class INSTANCE_OF(ConstantPoolIndexOperandMixin, Instruction):
     def execute(self, frame):
-        class_obj = frame.pop_operand()
-        if class_obj is None:
+        obj = frame.pop_operand()
+        if obj is None:
             frame.push_operand(0)
             return
         runtime_cp = frame.method.clazz.constant_pool
         class_ref = runtime_cp.get_constant_value(self.index)
         clazz = class_ref.resolved_class()
-        if class_obj.is_instance_of(clazz):
+        if obj.is_instance_of(clazz):
             frame.push_operand(1)
         else:
             frame.push_operand(0)
@@ -165,25 +166,16 @@ class INSTANCE_OF(ConstantPoolIndexOperandMixin, Instruction):
 
 class CHECK_CAST(ConstantPoolIndexOperandMixin, Instruction):
     def execute(self, frame):
-        class_obj = frame.pop_operand()
-        frame.push_operand(class_obj)
-        if class_obj is None:
+        obj = frame.pop_operand()
+        frame.push_operand(obj)
+        if obj is None:
             frame.push_operand(0)
             return
         runtime_cp = frame.method.clazz.constant_pool
         class_ref = runtime_cp.get_constant_value(self.index)
         clazz = class_ref.resolved_class()
-        if not class_obj.is_instance_of(clazz):
+        if not obj.is_instance_of(clazz):
             raise RuntimeError("java.lang.ClassCastException")
-
-
-def invoke_method(cur_frame, class_method):
-    next_frame = Frame(cur_frame.thread, class_method)
-    cur_frame.thread.push_frame(next_frame)
-    next_frame.push_args(cur_frame)
-    if class_method.is_native():  # TODO
-        if class_method.name == "registerNatives":
-            cur_frame.thread.pop_frame()
 
 
 class INVOKE_STATIC(ConstantPoolIndexOperandMixin, Instruction):
@@ -441,3 +433,20 @@ class ARRAY_LENGTH(NoOperandInstruction):
         if arr_obj is None:
             raise RuntimeError("java.lang.NullPointerException")
         frame.push_operand(arr_obj.length)
+
+
+@unsafe_singleton
+class INVOKE_NATIVE(NoOperandInstruction):
+    def execute(self, frame):
+        native_method = register.find_native_method(
+            frame.method.clazz.class_name, frame.method.name, frame.method.descriptor
+        )
+        if native_method is None:
+            raise RuntimeError(
+                "java.lang.UnsatisfiedLinkError: {0}.{1}{2}".format(
+                    frame.method.clazz.class_name,
+                    frame.method.name,
+                    frame.method.descriptor,
+                )
+            )
+        native_method(frame)

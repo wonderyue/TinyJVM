@@ -7,6 +7,7 @@ from runtime_data.frame import Frame
 from runtime_data.heap.utils import (
     get_array_class_name,
     get_component_class_name,
+    is_primitive,
 )
 import os
 
@@ -26,6 +27,7 @@ class Class:
         self.methods = []
         self.static_fields = []
         self._is_clinit_started = False
+        self.class_obj = None  # "object of java/lang/Class"
 
     @staticmethod
     def new_class(class_loader, class_reader):
@@ -55,6 +57,9 @@ class Class:
 
     def start_clinit(self):
         self._is_clinit_started = True
+
+    def is_primitive(self) -> bool:
+        return is_primitive(self.class_name)
 
     def is_array(self) -> bool:
         return self.class_name[0] == "["
@@ -94,7 +99,7 @@ class Class:
 
     def is_sub_class_of(self, other_class) -> bool:
         clazz = self.super_class
-        while clazz:
+        while clazz is not None:
             if clazz == other_class:
                 return True
             clazz = clazz.super_class
@@ -105,7 +110,7 @@ class Class:
 
     def is_implements(self, other_interface) -> bool:
         clazz = self
-        while clazz:
+        while clazz is not None:
             for interface in clazz.interfaces:
                 if interface == other_interface or interface.is_sub_interface_of(
                     other_interface
@@ -201,9 +206,12 @@ class Class:
 
     def new_object(self):
         data = [None] * self.instance_field_count
-        for field in self.fields:
-            if not field.is_static():
-                data[field.index] = field.val
+        c = self
+        while c is not None:
+            for field in c.fields:
+                if not field.is_static() and data[field.index] is None:
+                    data[field.index] = field.val
+            c = c.super_class
         return Object.new_object(self, data)
 
     def new_array_object(self, count):
@@ -231,3 +239,9 @@ class Class:
         if not self.is_interface():
             if self.super_class is not None and not self.super_class.is_clinit_started:
                 self.super_class.clinit(thread)
+
+    def get_static_field(self, name, descriptor):
+        return self.static_fields[self.get_field(name, descriptor, True).index]
+
+    def set_static_field(self, name, descriptor, value):
+        self.static_fields[self.get_field(name, descriptor, True).index] = value

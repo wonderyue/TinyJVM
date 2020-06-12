@@ -1,3 +1,6 @@
+from runtime_data.frame import Frame
+
+
 def lookup_method_in_class(clazz, name, descriptor):
     while clazz:
         for method in clazz.methods:
@@ -105,3 +108,9 @@ def to_class_name(descriptor):
         if d == descriptor:
             return class_name
     raise RuntimeError("Invalid descriptor: " + descriptor)
+
+
+def invoke_method(cur_frame, class_method):
+    next_frame = Frame(cur_frame.thread, class_method)
+    cur_frame.thread.push_frame(next_frame)
+    next_frame.push_args(cur_frame)

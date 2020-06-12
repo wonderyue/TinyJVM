@@ -2,8 +2,9 @@ import zipfile
 import os
 from class_file.class_reader import ClassReader
 from runtime_data.heap.clazz import Class
-from runtime_data.heap.utils import ATYPR_2_CLASS_NAME
+from runtime_data.heap.utils import ATYPR_2_CLASS_NAME, PRIMITIVE_TYPE
 from runtime_data.heap import string
+from runtime_data.heap import access_flags as AF
 
 
 class ClassLoader:
@@ -17,6 +18,8 @@ class ClassLoader:
             else self._main_class_from_jar(main_class)
         )
         self._classes = {}
+        self._load_basic_classes()
+        self._load_primitive_classes()
         print("BootClasspath:", self._boot_classpath)
         print("ExtClasspath", self._ext_classpath)
         print("UserClasspaths", self._user_classpaths)
@@ -82,9 +85,15 @@ class ClassLoader:
     def load_class(self, fully_qualified_name):
         if fully_qualified_name in self._classes:
             return self._classes[fully_qualified_name]
+        clazz = None
         if fully_qualified_name[0] == "[":
-            return self._load_array_class(fully_qualified_name)
-        return self._load_non_array_class(fully_qualified_name)
+            clazz = self._load_array_class(fully_qualified_name)
+        else:
+            clazz = self._load_non_array_class(fully_qualified_name)
+        if (class_clazz := self._classes.get("java/lang/Class")) is not None:
+            clazz.class_obj = class_clazz.new_object()
+            clazz.class_obj.extra = clazz
+        return clazz
 
     def _load_array_class(self, fully_qualified_name):
         clazz = Class.new_array(
@@ -160,3 +169,25 @@ class ClassLoader:
                         clazz.static_fields.append(field.val)
                 else:
                     clazz.static_fields.append(None)
+
+    def _load_basic_classes(self):
+        class_clazz = self.load_class("java/lang/Class")
+        # load_class("java/lang/Class") will trigger loading of several basic classes
+        for clazz in self._classes.values():
+            if clazz.class_obj is None:
+                clazz.class_obj = class_clazz.new_object()
+                clazz.class_obj.extra = clazz
+
+    def _load_primitive_classes(self):
+        """
+        for primitive like void or int
+        int.class is compiled as getstatic TYPE
+        """
+        for primitive_type, _ in PRIMITIVE_TYPE.items():
+            clazz = Class(self)
+            clazz.access_flags = AF.ACC_PUBLIC
+            clazz.class_name = primitive_type
+            clazz.start_clinit()
+            clazz.class_obj = self._classes["java/lang/Class"].new_object()
+            clazz.class_obj.extra = clazz
+            self._classes[primitive_type] = clazz

@@ -2,6 +2,7 @@ from runtime_data.heap.utils import (
     is_primitive,
     get_default_value,
 )
+import copy
 
 
 class Object:
@@ -14,6 +15,7 @@ class Object:
         """
         self.clazz = clazz
         self._data = data
+        self.extra = None
 
     def __getitem__(self, key):
         return self._data[key]
@@ -31,6 +33,7 @@ class Object:
 
     @staticmethod
     def new_object(clazz, data):
+
         return Object(clazz, data)
 
     @staticmethod
@@ -54,3 +57,12 @@ class Object:
     def get_field_value(self, name, descriptor):
         field = self.clazz.get_field(name, descriptor, False)
         return self._data[field.index]
+
+    def clone(self):
+        return Object(self.clazz, copy.copy(self._data))
+
+    @staticmethod
+    def array_copy(src, dest, src_pos, dest_pos, length):
+        dest.data[dest_pos : dest_pos + length] = list(
+            src.data[src_pos : src_pos + length]
+        )

@@ -6,15 +6,14 @@ from debug import log_frames, log_instruction
 
 
 class Interpreter:
-
     def __init__(self, class_method):
         thread = Thread()
         thread.push_frame(Frame(thread, class_method))
-        # try:
-        self.run(thread, class_method.code)
-        # except Exception as e:
-        #     print(e)
-        #     log_frames(thread)
+        try:
+            self.run(thread, class_method.code)
+        except Exception as e:
+            print(e)
+            log_frames(thread)
 
     def run(self, thread, code):
         reader = BytecodeReader()
@@ -25,8 +24,7 @@ class Interpreter:
             reader.reset(frame.method.code, pc)
             opcode = reader.read_uint(1)
             if opcode not in opcode2instruction:
-                raise RuntimeError(
-                    "Unsupported opcode: {0}".format(hex(opcode)))
+                raise RuntimeError("Unsupported opcode: {0}".format(hex(opcode)))
             instruction = opcode2instruction[opcode]
             instruction.fetch_operand(reader)
             frame.next_pc = reader.pc

@@ -48,11 +48,18 @@ modify debug.py:
 # Feature
 
 - [x] class loader(.class/.jar)
-- [x] instructions: 160+/202
+- [x] instructions: 190+/202
 - [x] interpreter
 - [x] array
 - [ ] verify
-- [ ] native method
+- [x] native method
 - [ ] exceptions
 - [ ] multithreading
 - [ ] gc
+
+# Reference
+
+- [The Java® Virtual Machine Specification](https://docs.oracle.com/javase/specs/jvms/se8/html/index.html)
+
+- [jvmgo-book](https://github.com/zxh0/jvmgo-book/tree/e2a23437d060fdd0b5f35433a6845a9ccb783ce1)
+

@@ -1,4 +1,11 @@
-from instructions.base import Instruction, NoOperandInstruction, LocalIndexOperandMixin, StoreLocalMixin, StoreLocalDoubleMixin, StoreLocalLongMixin
+from instructions.base import (
+    Instruction,
+    NoOperandInstruction,
+    LocalIndexOperandMixin,
+    StoreLocalMixin,
+    StoreLocalDoubleMixin,
+    StoreLocalLongMixin,
+)
 from utils.singleton import unsafe_singleton
 
 
@@ -112,3 +119,10 @@ class DASTORE(NoOperandInstruction):
 class LASTORE(NoOperandInstruction):
     def execute(self, frame):
         _store_array_value(frame, frame.pop_operand_long())
+
+
+@unsafe_singleton
+class CASTORE(NoOperandInstruction):
+    def execute(self, frame):
+        val = frame.pop_operand()
+        _store_array_value(frame, chr(val) if isinstance(val, int) else val)

@@ -1,4 +1,11 @@
-from instructions.base import Instruction, NoOperandInstruction, LocalIndexOperandMixin, LoadLocalMixin, LoadLocalDoubleMixin, LoadLocalLongMixin
+from instructions.base import (
+    Instruction,
+    NoOperandInstruction,
+    LocalIndexOperandMixin,
+    LoadLocalMixin,
+    LoadLocalDoubleMixin,
+    LoadLocalLongMixin,
+)
 from utils.singleton import unsafe_singleton
 
 
@@ -112,3 +119,9 @@ class DALOAD(NoOperandInstruction):
 class LALOAD(NoOperandInstruction):
     def execute(self, frame):
         frame.push_operand_long(_load_array_value(frame))
+
+
+@unsafe_singleton
+class CALOAD(NoOperandInstruction):
+    def execute(self, frame):
+        frame.push_operand(ord(_load_array_value(frame)))

@@ -6,6 +6,7 @@ from instructions.base import (
 )
 from utils.singleton import unsafe_singleton
 from runtime_data.heap import string
+from runtime_data.heap.ref import ClassRef
 
 
 @unsafe_singleton
@@ -127,6 +128,8 @@ class _LDC:
         val = runtime_cp.get_constant_value(self.index)
         if isinstance(val, str):
             frame.push_operand(string.new_string(cur_class.loader, val))
+        elif isinstance(val, ClassRef):
+            frame.push_operand(val.resolved_class().class_obj)
         else:
             frame.push_operand(val)
 
